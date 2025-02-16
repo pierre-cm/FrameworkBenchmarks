@@ -1,39 +1,45 @@
-import postgres from "npm:postgres";
+import { Client } from "postgres";
+
 import { Fortune, World } from "./types.ts";
 import { rand } from "./util.ts";
 
-export const sql = postgres({
+const client = new Client({
   user: "benchmarkdbuser",
   password: "benchmarkdbpass",
   database: "hello_world",
   hostname: "tfb-database",
-  max: 1,
-});
+})
 
-export const fortunes = () => sql<Fortune[]>`SELECT id, message FROM fortune`;
+export const fortunes = async () => (await client.queryObject<Fortune>(`SELECT id, message FROM fortune`)).rows
 
 export const find = (id: number) =>
-	sql<World[]>`SELECT id, randomNumber FROM world WHERE id = ${id}`.then(
-		(arr) => arr[0],
-	);
+	client.queryObject<World>(`SELECT id, randomNumber FROM world WHERE id = ${id}`).then(
+		(res) => res.rows[0],
+	)
 
 export const findThenRand = (id: number) =>
-	sql<World[]>`SELECT id, randomNumber FROM world WHERE id = ${id}`.then(
-		(arr) => {
-			arr[0].randomNumber = rand();
-			return arr[0];
+	client.queryObject<World>(`SELECT id, randomNumber FROM world WHERE id = ${id}`).then(
+		(res) => {
+			res.rows[0].randomNumber = rand()
+			return res.rows[0]
 		},
 	);
 
-export const bulkUpdate = (worlds: World[]) => {
-	worlds = worlds.toSorted((a, b) => a.id - b.id);
+export const bulkUpdate = async (worlds: World[]) => {
+	const caseStatements = new Array(worlds.length)
+	const ids = new Array(worlds.length)
 
-	const values = new Array(worlds.length);
 	for (let i = 0; i < worlds.length; i++) {
-		values[i] = [worlds[i].id, worlds[i].randomNumber];
+		const { id, randomNumber } = worlds[i]
+		caseStatements[i] = `WHEN id = ${id} THEN ${randomNumber}`
+		ids[i] = id
 	}
 
-	return sql`UPDATE world SET randomNumber = (update_data.randomNumber)::int
-		FROM (VALUES ${sql(values)}) AS update_data (id, randomNumber)
-		WHERE world.id = (update_data.id)::int`;
-};
+	await client.queryArray(`
+		UPDATE world
+		SET randomNumber = CASE
+			${caseStatements.join(' ')}
+		END
+		WHERE id IN (${ids});
+	`)
+}
