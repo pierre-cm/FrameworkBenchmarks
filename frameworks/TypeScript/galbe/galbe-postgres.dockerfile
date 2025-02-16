@@ -1,0 +1,19 @@
+FROM oven/bun:1.2
+
+EXPOSE 8080
+
+WORKDIR /app
+
+COPY . .
+
+ENV NODE_ENV=production
+
+ENV DATABASE postgres
+
+RUN bun install --production
+
+RUN bun run build
+
+USER bun
+
+CMD ["bun", "spawn.ts"]

@@ -1,0 +1,49 @@
+{
+  "framework": "galbe",
+  "tests": [
+    {
+      "default": {
+        "json_url": "/json",
+        "plaintext_url": "/plaintext",
+        "port": 8080,
+        "approach": "Realistic",
+        "classification": "Micro",
+        "database": "None",
+        "framework": "galbe",
+        "language": "TypeScript",
+        "flavor": "None",
+        "orm": "None",
+        "platform": "bun",
+        "webserver": "None",
+        "os": "Linux",
+        "database_os": "Linux",
+        "display_name": "Galbe",
+        "notes": "",
+        "versus": "nodejs"
+      },
+      "postgres": {
+        "json_url": "/json",
+        "plaintext_url": "/plaintext",
+        "fortune_url": "/fortunes",
+        "db_url": "/db",
+        "query_url": "/queries?queries=",
+        "update_url": "/updates?queries=",
+        "port": 8080,
+        "approach": "Realistic",
+        "classification": "Micro",
+        "database": "Postgres",
+        "framework": "galbe",
+        "language": "TypeScript",
+        "flavor": "None",
+        "orm": "Raw",
+        "platform": "bun",
+        "webserver": "None",
+        "os": "Linux",
+        "database_os": "Linux",
+        "display_name": "Galbe [PostgreSQL]",
+        "notes": "",
+        "versus": "nodejs"
+      }
+    }
+  ]
+}
