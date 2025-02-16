@@ -6,10 +6,9 @@
         "json_url": "/json",
         "plaintext_url": "/plaintext",
         "db_url": "/db",
-        "query_url": "/queries?q=",
-        "update_url": "/updates?q=",
+        "query_url": "/queries?queries=",
+        "update_url": "/updates?queries=",
         "fortune_url": "/fortunes",
-        "cached_query_url": "/cached_queries?q=",
         "port": 8080,
         "approach": "Realistic",
         "classification": "Platform",
@@ -24,8 +23,7 @@
         "database_os": "Linux",
         "display_name": "oak",
         "notes": "",
-        "versus": "nodejs",
-        "tags": ["broken"]
+        "versus": "nodejs"
       }
     }
   ]

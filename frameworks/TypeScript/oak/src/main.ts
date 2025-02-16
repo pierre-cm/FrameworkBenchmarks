@@ -1,27 +1,81 @@
-import { Application, DatabaseResult, Manager } from "./deps.ts";
-import { router } from "./routes.ts";
-import { getDbClient } from "./utils.ts";
+import { Application, Router } from "@oak/oak"
+import { escape } from "@std/html/entities"
+import * as db from "./postgres.ts"
+import { parseQueriesNumber, rand } from "./util.ts"
 
-const app = new Application<
-  { manager: Manager; cached_worlds: DatabaseResult[] }
->();
+const router = new Router()
 
-// headers
-app.use(async (ctx, next) => {
-  ctx.response.headers.set("Date", new Date().toUTCString());
-  ctx.response.headers.set("Server", "Oak");
-  await next();
-});
+router.get("/plaintext", (ctx) => {
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.body = "Hello, World!"
+})
 
-// database handling
-app.use(async (ctx, next) => {
-  const db = await getDbClient();
-  ctx.state.manager = db.getManager();
-  await next();
-  await db.disconnect();
-});
+router.get("/json", (ctx) => {
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.body = { message: "Hello, World!" }
+})
 
-app.use(router.routes());
-app.use(router.allowedMethods());
+router.get("/db", async (ctx) => {
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.body = await db.find(rand())
+})
 
-await app.listen({ port: 8080 });
+router.get("/fortunes", async (ctx) => {
+
+  const fortunes = await db.fortunes()
+
+  fortunes.push({
+    id: 0,
+    message: "Additional fortune added at request time.",
+  })
+
+  fortunes.sort((a, b) => {
+    if (a.message < b.message) return -1
+    return 1
+  })
+
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.headers.set("content-type", "text/html; charset=utf-8")
+
+  const n = fortunes.length
+
+  let html = ""
+  for (let i = 0; i < n; i++) {
+    html += `<tr><td>${fortunes[i].id}</td><td>${escape(
+      fortunes[i].message,
+    )}</td></tr>`
+  }
+
+  ctx.response.body = `<!DOCTYPE html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr>${html}</table></body></html>`
+})
+
+router.get("/queries", async (ctx) => {
+  const num = parseQueriesNumber(ctx.request.url.searchParams.get("queries"))
+  const worldPromises = new Array(num)
+
+  for (let i = 0; i < num; i++) worldPromises[i] = db.find(rand())
+
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.body = await Promise.all(worldPromises)
+})
+
+router.get("/updates", async (ctx) => {
+  const num = parseQueriesNumber(ctx.request.url.searchParams.get("queries"))
+  const worldPromises = new Array(num)
+
+  for (let i = 0; i < num; i++)
+    worldPromises[i] = db.findThenRand(rand())
+
+  const worlds = await Promise.all(worldPromises)
+
+  await db.bulkUpdate(worlds)
+
+  ctx.response.headers.set("server", "Oak")
+  ctx.response.body = await Promise.all(worldPromises)
+})
+
+const app = new Application()
+app.use(router.routes())
+app.use(router.allowedMethods())
+
+await app.listen({ port: 8080 })
