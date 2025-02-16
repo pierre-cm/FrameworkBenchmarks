@@ -10,4 +10,4 @@ COPY . .
 
 RUN deno cache src/main.ts -c deno.json
 
-CMD [ "run", "--allow-all", "src/main.ts" ]
+CMD [ "run", "--allow-all", "src/spawn.ts" ]

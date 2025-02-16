@@ -3,7 +3,13 @@ import { escape } from "@std/html/entities"
 import * as db from "./postgres.ts"
 import { parseQueriesNumber, rand } from "./util.ts"
 
+const port = parseInt(Deno.args[0]) || 8080;
+
 const router = new Router()
+
+router.head("/", (ctx) => {
+  ctx.response.status = 200
+})
 
 router.get("/plaintext", (ctx) => {
   ctx.response.headers.set("server", "Oak")
@@ -78,4 +84,6 @@ const app = new Application()
 app.use(router.routes())
 app.use(router.allowedMethods())
 
-await app.listen({ port: 8080 })
+app.listen({ port })
+
+console.log(`Listening on port http://localhost:${port}`)
